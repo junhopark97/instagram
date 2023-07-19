@@ -1,85 +1,100 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { Alert } from "antd";
+import { SmileOutlined, FrownOutlined } from "@ant-design/icons";
+import { Form, Input, Button, notification } from "antd";
 import { useNavigate } from "react-router-dom";
 
 export default function Signup() {
   const history = useNavigate();
+  const [fieldErrors, setFieldErrors] = useState({});
 
-  const [inputs, setInputs] = useState({ username: "", password: "" });
-  const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState({});
-  const [formDisabled, setFormDisabled] = useState(true);
-  // const [username, setUsername] = useState("");
-  // const [password, setPassword] = useState("");
+  const onFinish = (values) => {
+    // console.log('Success:', values);
+    async function foo() {
+      const { username, password } = values;
 
-  const onSubmit = e => {
-    e.preventDefault();
+      setFieldErrors({});
 
-    setLoading(true);
-    setErrors({});
+      const data = { username, password };
+      try {
+        await axios.post("http://localhost:8000/accounts/signup/", data);
 
-    axios.post("http://localhost:8000/accounts/signup/", inputs)
-      .then(res => {
-        console.log("response :", res);
+        notification.open({
+          message: "회원가입 성공",
+          description: "로그인 페이지로 이동합니다.",
+          icon: <SmileOutlined style={{ color: "#108ee9" }} />
+        });
+
         history("/accounts/login");
-      })
-      .catch(err => {
-        console.log("error :", err);
-        if (err.response) {
-          setErrors({
-            username: (err.response.data.username || []).join(" "),
-            password: (err.response.data.password || []).join(" "),
-          })
-          // console.log("error.response :", err.response);
-        }
-      })
-      .finally(() => {
-        setLoading(false);
-      })
+      } catch (error) {
+        if (error.response) {
+          notification.open({
+            message: "회원가입 실패",
+            description: "아이디/비밀번호를 확인해주세요.",
+            icon: <FrownOutlined style={{ color: "#ff3333" }} />
+          });
 
-    console.log('onSubmit', inputs);
+          const { data: fieldErrorMessages } = error.response;
+
+          setFieldErrors(
+            Object.entries(fieldErrorMessages).reduce((acc, [fieldName, errors]) => {
+              // errors : ["m1", "m2"].join(" ") => "m1 m2";
+              acc[fieldName] = {
+                validateStatus: "error",
+                help: errors.join(" "),
+              }
+              return acc
+            }, {})
+          )
+        }
+      }
+    }
+    foo();
   };
 
-  useEffect(() => {
-    const isEnabled = Object.values(inputs).every(s => s.length > 0);
-    // console.log("changed input :", inputs);
-    // const isDisabled = inputs.username.length === 0 || inputs.password.length === 0;
-    setFormDisabled(!isEnabled);
-  }, [inputs]);
-
-  const onChange = e => {
-    const { name, value } = e.target;
-    setInputs(prev => ({
-      ...prev,
-      [name]: value
-    }));
+  const onFinishFailed = (errorInfo) => {
+    console.log('Failed:', errorInfo);
   };
 
   return (
-    <div>
-      <form onSubmit={onSubmit}>
-        <div>
-          <input
-            type="text"
-            name="username"
-            onChange={onChange}
-          />
-          {errors.username && <Alert type="error" message={errors.username} />}
-        </div>
-        <div>
-          <input type="password"
-            name="password"
-            onChange={onChange}
-          />
-          {errors.password && <Alert type="error" message={errors.password} />}
-        </div>
-        <input
-          type="submit"
-          value="회원가입"
-          disabled={loading || formDisabled}
-        />
-      </form>
-    </div>
+    <Form
+      name="basic"
+      labelCol={{ span: 8 }}
+      wrapperCol={{ span: 16 }}
+      style={{ maxWidth: 600 }}
+      initialValues={{ remember: true }}
+      onFinish={onFinish}
+      onFinishFailed={onFinishFailed}
+      autoComplete="off"
+    >
+      <Form.Item
+        label="Username"
+        name="username"
+        rules={[
+          { required: true, message: 'Please input your username!' },
+          { min: 5, message: "5글자 이상 입력해 주세요." }
+        ]}
+        hasFeedback
+        {...fieldErrors.username}
+      >
+        <Input />
+      </Form.Item>
+
+      <Form.Item
+        label="Password"
+        name="password"
+        rules={[{ required: true, message: 'Please input your password!' }]}
+        hasFeedback
+        {...fieldErrors.password}
+      >
+        <Input.Password />
+      </Form.Item>
+
+      <Form.Item wrapperCol={{ offset: 8, span: 16 }}>
+        <Button type="primary" htmlType="submit">
+          Submit
+        </Button>
+      </Form.Item>
+    </Form>
   );
 }
