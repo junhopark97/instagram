@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from "react";
 import Axios from "axios"
 import Post from "components/Post"
+import { useAppContext } from "store";
 
 
 const apiUrl = "http://localhost:8000/api/posts/";
 
 function PostList() {
+  const { store: { accessToken } } = useAppContext();
+  // console.log(accessToken);
   const [postList, setPostList] = useState([]);
 
   useEffect(() => {
