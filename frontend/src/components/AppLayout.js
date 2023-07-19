@@ -16,9 +16,9 @@ function AppLayout({ children }) {
           <div className="search"><Input.Search placeholder="입력해 주세요" /></div>
           <div className="topanav">
             <Menu mode="horizontal">
-              <Menu.Item>메뉴1</Menu.Item>
-              <Menu.Item>메뉴2</Menu.Item>
-              <Menu.Item>메뉴3</Menu.Item>
+              <Menu.Item key="메뉴1">메뉴1</Menu.Item>
+              <Menu.Item key="메뉴2">메뉴2</Menu.Item>
+              <Menu.Item key="메뉴3">메뉴3</Menu.Item>
             </Menu>
           </div>
         </div>
